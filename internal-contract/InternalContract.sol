@@ -33,7 +33,13 @@ contract Aggregator is AggregatorInterface, PluginClient, Ownable {
     uint256 totalcredits;
   }
 
-  mapping(uint256 => uint256) public prices;
+  struct pricedb{
+    uint256 reqid;
+    uint256 answer;
+    uint256 updatedOn;
+  }
+
+  mapping(uint256 => pricedb) public prices;
   mapping(address => PLIDatabase) public plidbs;
 
   event ResponseReceived(int256 indexed response, uint256 indexed answerId, address indexed sender);
@@ -303,7 +309,11 @@ contract Aggregator is AggregatorInterface, PluginClient, Ownable {
     updatedTimestamps[_answerId] = now;
     currentAnswers[_answerId] = currentAnswerTemp;
 
-    prices[_aggRequestId] = uint256(currentAnswerTemp);
+    prices[_aggRequestId] = pricedb(
+      _aggRequestId,
+      uint256(currentAnswerTemp),
+      now
+    );
     _aggRequestId += 1;
 
     emit AnswerUpdated(currentAnswerTemp, _answerId, now);
@@ -331,8 +341,8 @@ contract Aggregator is AggregatorInterface, PluginClient, Ownable {
     return currentAnswers[latestCompletedAnswer];
   }
 
-  function showPrice(uint256 _agreqId) public view returns(uint256){
-    return prices[_agreqId];
+  function showPrice(uint256 _agreqId) public view returns(uint256,uint256){
+    return (prices[_agreqId].answer,prices[_agreqId].updatedOn);
   }
   /**
    * @notice get the last updated at block timestamp
